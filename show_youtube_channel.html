@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Channel</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header"><h1>YouTube Channel</h1></header>
+    <div id="app" class="container mt-4">
+
+        <!-- Channel info --> 
+        <div class="channel d-flex flex-column flex-md-row align-items-center">
+            <div class="profile mb-3 mb-md-0 mr-md-4">
+                <img :src="channel.profile_picture_url" alt="Profile Picture" class="img-fluid rounded-circle profile-img">
+            </div>
+            <div class="details text-center text-md-left">
+                <h1 class="channel-title">{{ channel.name }}</h1>
+                <p>{{ channel.description }}</p>
+            </div>
+        </div>
+        
+        
+        <!-- Latest Videos -->
+        <div class="vid-grid">
+            <div class="vid-container" v-for="video in paginatedVideos" :key="video.video_id">
+                <div class="vid-layout">
+                    <img :src="video.thumbnail_url || 'https://via.placeholder.com/120x90?text=No+Thumbnail'" alt="Thumbnail" class="thumbnail">
+                    <h2 class="video-title">
+                        <a :href="video.video_url" target="_blank">{{ video.title }}</a>
+                    </h2>
+                    <p class="vid-description">{{ video.description }}</p>
+                </div>
+            </div>
+        </div>
+        
+        
+        <!-- pagination -->
+        <nav class="layout-paginator">
+            <ul class="pagination">
+                <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                    <a class="page-link" @click="changePage(currentPage - 1)">Previous</a>
+                </li>
+                <li class="page-item" :class="{ active: currentPage === pageNumber }" v-for="pageNumber in totalPages" :key="pageNumber">
+                    <a class="page-link" @click="changePage(pageNumber)">{{ pageNumber }}</a>
+                </li>
+                <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                    <a class="page-link" @click="changePage(currentPage + 1)">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- vue.js -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                channel: {},
+                videos: [],
+                currentPage: 1,
+                perPage: 20
+            },
+            computed: {
+                paginatedVideos() {
+                    const start = (this.currentPage - 1) * this.perPage;
+                    return this.videos.slice(start, start + this.perPage);
+                },
+                totalPages() {
+                    return Math.ceil(this.videos.length / this.perPage);
+                }
+            },
+            methods: {
+                fetchData() {
+                    fetch('youtube_channel_json.php?channel_id=my_channel_id') 
+                        .then(response => response.json())
+                        .then(data => {
+                            this.channel = data.channel;
+                            this.videos = data.videos;
+                        })
+                        .catch(error => console.error('Fetch error:', error));
+                },
+                changePage(page) {
+                    if (page >= 1 && page <= this.totalPages) {
+                        this.currentPage = page;
+                    }
+                },
+            },
+            mounted() {
+                this.fetchData();
+            }
+        });
+    </script>
+</body>
+</html>
